@@ -30,6 +30,18 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Request Interceptor: Attach JWT Bearer Token if available (ensures cross-domain auth works even when cookies are restricted)
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 // Response Interceptor for handling global errors
 api.interceptors.response.use(
   (response) => response,
