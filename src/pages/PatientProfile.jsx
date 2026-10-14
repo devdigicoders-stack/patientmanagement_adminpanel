@@ -844,7 +844,7 @@ export const PatientProfile = () => {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {documents.slice(0, 6).map((doc) => {
-                  const fileUrl = `http://localhost:5000/api/files/${doc._id || doc.storedName}`;
+                  const fileUrl = uploadService.getFileUrl(doc._id || doc.storedName);
                   const isPdf = doc.mimeType === "application/pdf" || doc.originalName?.endsWith(".pdf");
 
                   return (
@@ -1079,7 +1079,7 @@ export const PatientProfile = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredDocs.map((doc) => {
-                  const fileUrl = `http://localhost:5000/api/files/${doc._id || doc.storedName}`;
+                  const fileUrl = uploadService.getFileUrl(doc._id || doc.storedName);
                   const isPdf = doc.mimeType === "application/pdf" || doc.originalName?.endsWith(".pdf");
 
                   return (

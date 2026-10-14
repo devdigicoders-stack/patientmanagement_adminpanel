@@ -1,6 +1,11 @@
-import api from "./api.js";
+import api, { getFileUrl } from "./api.js";
 
 export const uploadService = {
+  // Helper to generate file streaming URL from environment configured base URL
+  getFileUrl(fileIdOrName) {
+    return getFileUrl(fileIdOrName);
+  },
+
   // Upload file under specific category ("Patient Image", "Investigation", "Histopathology", "Other")
   async uploadCategoryDocument(patientId, file, category = "Other", visitId = null) {
     const formData = new FormData();

@@ -1,4 +1,4 @@
-import api from "./api";
+import api, { API_BASE_URL } from "./api";
 
 const reportService = {
   // Fetch Dashboard Analytics with optional date range filter
@@ -67,14 +67,12 @@ const reportService = {
 
   // Get Server-side PDF URL for Patient Summary Report
   getPatientPdfUrl: (id) => {
-    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    return `${baseURL}/reports/patients/${id}/pdf`;
+    return `${API_BASE_URL}/reports/patients/${id}/pdf`;
   },
 
   // Get Server-side PDF URL for Visit Report
   getVisitPdfUrl: (visitId) => {
-    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    return `${baseURL}/reports/visits/${visitId}/pdf`;
+    return `${API_BASE_URL}/reports/visits/${visitId}/pdf`;
   },
 };
 

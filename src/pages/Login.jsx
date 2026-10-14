@@ -115,7 +115,7 @@ export const Login = () => {
       const msg =
         respData?.message ||
         (err.message === "Network Error"
-          ? "Unable to connect to backend server. Please check if server is running on port 5000."
+          ? "Unable to connect to backend server. Please verify your connection or check if the backend service is active."
           : "Invalid email or password credentials.");
 
       showToast(msg, "error");
