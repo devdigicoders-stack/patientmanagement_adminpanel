@@ -810,22 +810,29 @@ export const AdvancedSearch = () => {
 
                     return (
                       <tr key={p._id} className="hover:bg-blue-50/30 transition-colors">
-                        {/* CR Number */}
+                        {/* CR Number & IP Number */}
                         <td className="p-3.5 pl-6 whitespace-nowrap">
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50/80 border border-blue-200/70 font-mono font-bold text-xs text-[#0a6cf0] tracking-tight">
-                            <span>{p.crNo}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyCrNo(p.crNo)}
-                              title="Copy CR Number"
-                              className="p-1 rounded-lg text-slate-400 hover:text-[#0a6cf0] hover:bg-blue-100/50 transition-colors cursor-pointer print:hidden"
-                            >
-                              {copiedCrNo === p.crNo ? (
-                                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5" />
-                              )}
-                            </button>
+                          <div className="flex flex-col gap-1 items-start">
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-50/80 border border-blue-200/70 font-mono font-bold text-xs text-[#0a6cf0] tracking-tight">
+                              <span>{p.crNo}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyCrNo(p.crNo)}
+                                title="Copy CR Number"
+                                className="p-1 rounded-lg text-slate-400 hover:text-[#0a6cf0] hover:bg-blue-100/50 transition-colors cursor-pointer print:hidden"
+                              >
+                                {copiedCrNo === p.crNo ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                ) : (
+                                  <Copy className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
+                            {(p.ipNo || p.hospitalDetails?.ipNumber) && (
+                              <span className="text-[10px] font-mono font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/60">
+                                IP: {p.ipNo || p.hospitalDetails?.ipNumber}
+                              </span>
+                            )}
                           </div>
                         </td>
 

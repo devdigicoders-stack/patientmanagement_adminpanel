@@ -41,11 +41,22 @@ import { Button } from "../components/ui/Button";
 import { DatePicker } from "../components/ui/DatePicker";
 import { FileUpload } from "../components/ui/FileUpload";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
+import {
+  DISEASES_SUGGESTIONS,
+  COMPLAINTS_SUGGESTIONS,
+  PROCEDURES_SUGGESTIONS,
+  DISCHARGE_REMARKS_SUGGESTIONS,
+  INVESTIGATION_SUGGESTIONS,
+} from "../data/clinicalMasterData";
+import DischargePrintModal from "../components/patient/DischargePrintModal";
 
 // Zod Validation Schema for Patient Registration
 const patientRegistrationSchema = z.object({
+  crNo: z.string().min(1, "CR Number is required").trim(),
+  ipNo: z.string().optional(),
+  dischargeRemarks: z.string().optional(),
   personalDetails: z.object({
-    name: z.string().min(2, "Patient name is required (min 2 chars)"),
+    name: z.string().min(2, "Patient name is required"),
     fatherGuardianName: z.string().optional(),
     age: z.preprocess(
       (val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
@@ -138,10 +149,10 @@ export const PatientRegistration = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  // Active Wizard Step (1: Identity, 2: Ward & Doctor, 3: Diagnosis & Findings, 4: Treatment & Discharge)
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registeredSuccess, setRegisteredSuccess] = useState(null);
+  const [showDischargeModal, setShowDischargeModal] = useState(false);
   const [selectedRawFiles, setSelectedRawFiles] = useState([]);
 
   // React Hook Form initialization - ALL EMPTY DEFAULTS WITH PLACEHOLDERS
@@ -155,6 +166,9 @@ export const PatientRegistration = () => {
   } = useForm({
     resolver: zodResolver(patientRegistrationSchema),
     defaultValues: {
+      crNo: "",
+      ipNo: "",
+      dischargeRemarks: "",
       personalDetails: {
         name: "",
         fatherGuardianName: "",
@@ -285,6 +299,7 @@ export const PatientRegistration = () => {
     let isValid = true;
     if (currentStep === 1) {
       isValid = await trigger([
+        "crNo",
         "personalDetails.name",
         "personalDetails.age",
         "personalDetails.gender",
@@ -382,12 +397,20 @@ export const PatientRegistration = () => {
             </div>
 
             {/* Print Action on Top */}
-            <button
-              onClick={handlePrintSlip}
-              className="print:hidden flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#0a6cf0] font-bold text-xs sm:text-sm shadow-md hover:bg-blue-50 transition-all cursor-pointer shrink-0"
-            >
-              <Printer className="w-4 h-4" /> Print Admission Slip
-            </button>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                onClick={() => setShowDischargeModal(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-white font-bold text-xs sm:text-sm shadow-md hover:bg-purple-700 transition-all cursor-pointer shrink-0"
+              >
+                <FileText className="w-4 h-4" /> Single Page A4 Discharge Slip
+              </button>
+              <button
+                onClick={handlePrintSlip}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-[#0a6cf0] font-bold text-xs sm:text-sm shadow-md hover:bg-blue-50 transition-all cursor-pointer shrink-0"
+              >
+                <Printer className="w-4 h-4" /> Print Admission Slip
+              </button>
+            </div>
           </div>
 
           {/* Slip Body */}
@@ -396,13 +419,20 @@ export const PatientRegistration = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-[#f0f6fe] border border-blue-200/80">
               <div className="flex flex-col">
                 <span className="text-[11px] font-bold tracking-widest text-slate-500 uppercase">
-                  Central Registration Number (CR No.)
+                  Central Registration & IP Numbers
                 </span>
-                <span className="text-3xl sm:text-4xl font-mono font-black text-[#0a6cf0] tracking-wider mt-0.5">
-                  {registeredSuccess.crNo}
-                </span>
+                <div className="flex items-center gap-4 mt-0.5">
+                  <span className="text-2xl sm:text-3xl font-mono font-black text-[#0a6cf0] tracking-wider">
+                    CR: {registeredSuccess.crNo}
+                  </span>
+                  {registeredSuccess.ipNo && (
+                    <span className="text-2xl sm:text-3xl font-mono font-black text-purple-700 tracking-wider">
+                      IP: {registeredSuccess.ipNo}
+                    </span>
+                  )}
+                </div>
                 <span className="text-xs text-slate-500 mt-1">
-                  Unique Medical Record Identifier • Generated automatically by backend
+                  Unique Medical Record Identifiers • Manually recorded
                 </span>
               </div>
 
@@ -524,6 +554,13 @@ export const PatientRegistration = () => {
             </div>
           </div>
         </div>
+
+        {/* Dedicated A4 Single Page Discharge Slip Modal */}
+        <DischargePrintModal
+          isOpen={showDischargeModal}
+          onClose={() => setShowDischargeModal(false)}
+          patient={registeredSuccess}
+        />
       </div>
     );
   }
@@ -693,14 +730,6 @@ export const PatientRegistration = () => {
                   {...register("personalDetails.dob")}
                   error={errors.personalDetails?.dob?.message}
                 />
-                <Input
-                  label="Generated CR Number"
-                  placeholder="Auto-generated on save (e.g. CR-2026-00001)"
-                  readOnly
-                  disabled
-                  className="font-mono text-xs text-slate-500 bg-slate-50 cursor-not-allowed"
-                  helperText="Unique central registration ID generated on registration"
-                />
               </div>
             </div>
 
@@ -764,29 +793,59 @@ export const PatientRegistration = () => {
               </div>
             </div>
 
-            {/* 1.3 Hospital / Patient Tracking Numbers Card (Proposal Point 7) */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs">
-              <div className="flex items-center gap-2.5 pb-4 mb-5 border-b border-slate-100">
-                <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm sm:text-base font-bold text-slate-900">Hospital & Patient Identifier Numbers</h2>
-                  <p className="text-xs text-slate-500">Internal hospital tracking IDs (Proposal Point 7)</p>
+            {/* 1.3 Hospital / Patient Tracking Numbers Card: CR & IP Numbers Manual Entry */}
+            <div className="bg-white rounded-2xl border-2 border-sky-200/90 p-5 sm:p-6 shadow-sm">
+              <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100 flex-wrap gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
+                      CR Number & IP Number
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                      </span>
+                    </h2>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Hospital Number"
-                  placeholder="e.g. HOSP-10293"
-                  {...register("hospitalDetails.hospitalNumber")}
-                />
-                <Input
-                  label="Patient File Number"
-                  placeholder="e.g. P-49120"
-                  {...register("hospitalDetails.patientNumber")}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="lg:col-span-2">
+                  <Input
+                    label="CR Number"
+                    placeholder="e.g. CR-2026-0001"
+                    required
+                    className="font-mono font-bold text-sky-950 border-sky-300 focus:border-sky-600"
+                    {...register("crNo")}
+                    error={errors.crNo?.message}
+                    helperText="Central Registration Number"
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  <Input
+                    label="IP Number"
+                    placeholder="e.g. IP-2026-015"
+                    className="font-mono font-bold text-purple-950 border-purple-300 focus:border-purple-600"
+                    {...register("ipNo")}
+                    error={errors.ipNo?.message}
+                    helperText="IP Number"
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  <Input
+                    label="Hospital File Number"
+                    placeholder="e.g. HOSP-10293"
+                    {...register("hospitalDetails.hospitalNumber")}
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  <Input
+                    label="Patient Tracking Number (ट्रैकिंग नं.)"
+                    placeholder="e.g. P-49120"
+                    {...register("hospitalDetails.patientNumber")}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -924,19 +983,54 @@ export const PatientRegistration = () => {
               </div>
 
               <div className="flex flex-col gap-4">
-                <Input
-                  label="Diagnosis Details"
-                  placeholder="e.g. Acute Anterior Wall Myocardial Infarction (STEMI), Type 2 Diabetes"
-                  {...register("diagnosis.diagnosisDetails")}
-                />
-                <Textarea
-                  label="Presenting Complaints"
-                  placeholder="e.g. Severe retrosternal chest pain radiating to left arm for 3 hours, associated with heavy diaphoresis and nausea..."
-                  {...register("diagnosis.presentingComplaints")}
-                />
+                <div className="flex flex-col">
+                  <Input
+                    label="Diagnosis Details"
+                    placeholder="e.g. Acute Anterior Wall Myocardial Infarction (STEMI), Type 2 Diabetes"
+                    list="disease-suggestions-list"
+                    {...register("diagnosis.diagnosisDetails")}
+                  />
+                  <datalist id="disease-suggestions-list">
+                    {DISEASES_SUGGESTIONS.map((dis, idx) => (
+                      <option key={idx} value={dis} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div className="flex flex-col">
+                  <Textarea
+                    label="Presenting Complaints"
+                    placeholder="e.g. High grade fever with chills, severe retrosternal chest pain..."
+                    {...register("diagnosis.presentingComplaints")}
+                  />
+                  {/* Quick complaints chips for rapid clinical selection */}
+                  <div className="mt-1.5 flex flex-wrap gap-1.5 text-[11px]">
+                    <span className="font-semibold text-slate-500 self-center">Quick Select:</span>
+                    {COMPLAINTS_SUGGESTIONS.slice(0, 5).map((comp, cIdx) => (
+                      <button
+                        type="button"
+                        key={cIdx}
+                        onClick={() => {
+                          const curr = control._formValues.diagnosis?.presentingComplaints || "";
+                          reset({
+                            ...control._formValues,
+                            diagnosis: {
+                              ...control._formValues.diagnosis,
+                              presentingComplaints: curr ? `${curr}, ${comp}` : comp,
+                            },
+                          });
+                        }}
+                        className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10.5px] border border-slate-200 cursor-pointer"
+                      >
+                        + {comp.split(" ").slice(0, 4).join(" ")}...
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <Textarea
                   label="Physical Examination Findings & Vitals"
-                  placeholder="e.g. Pulse: 98 bpm regular, BP: 140/90 mmHg, SpO2: 95% on room air, Temp: 98.6 F. Chest: Bilateral clear..."
+                  placeholder="e.g. Pulse: 98 bpm regular, BP: 140/90 mmHg, SpO2: 95% on room air, Temp: 98.6 F..."
                   {...register("diagnosis.physicalFindings")}
                 />
               </div>
@@ -1005,14 +1099,22 @@ export const PatientRegistration = () => {
                   placeholder="e.g. Dual antiplatelet therapy (Aspirin + Clopidogrel), Atorvastatin 80mg, IV Heparin infusion, beta blockers..."
                   {...register("treatment.treatmentDetails")}
                 />
-                <Textarea
-                  label="Operation / Surgical Procedure Details"
-                  placeholder="e.g. Coronary Angiography via right radial approach. Primary PCI with 1 Drug-Eluting Stent (DES 3.0 x 24mm) to Mid-LAD..."
-                  {...register("treatment.operationProcedureDetails")}
-                />
+                <div className="flex flex-col">
+                  <Input
+                    label="Operation / Surgical Procedure Details"
+                    placeholder="e.g. Laparoscopic Cholecystectomy, PCI with 1 DES, Appendectomy..."
+                    list="procedure-suggestions-list"
+                    {...register("treatment.operationProcedureDetails")}
+                  />
+                  <datalist id="procedure-suggestions-list">
+                    {PROCEDURES_SUGGESTIONS.map((proc, idx) => (
+                      <option key={idx} value={proc} />
+                    ))}
+                  </datalist>
+                </div>
                 <Textarea
                   label="Course in Hospital"
-                  placeholder="e.g. Monitored in CCU for 48 hours post-procedure. Vitals remained stable, no groin hematoma or recurrent chest pain..."
+                  placeholder="e.g. Monitored in CCU for 48 hours post-procedure. Vitals remained stable, steady improvement..."
                   {...register("courseInHospital")}
                 />
               </div>
@@ -1106,9 +1208,28 @@ export const PatientRegistration = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Discharge Remarks with Master Suggestions */}
+                <div className="sm:col-span-2 flex flex-col">
+                  <Input
+                    label="Discharge Remarks"
+                    placeholder="e.g. Discharged in stable condition. Advised complete rest and prescribed medications..."
+                    list="discharge-remarks-suggestions-list"
+                    className="border-red-200 focus:border-red-500 font-medium"
+                    {...register("dischargeRemarks")}
+                  />
+                  <datalist id="discharge-remarks-suggestions-list">
+                    {DISCHARGE_REMARKS_SUGGESTIONS.map((rem, idx) => (
+                      <option key={idx} value={rem} />
+                    ))}
+                  </datalist>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Discharge Remarks will be displayed at the end of the discharge print.
+                  </p>
+                </div>
+
                 <Textarea
-                  label="Doctor's Comments"
-                  placeholder="e.g. Patient successfully reperfused. Advised strict compliance to dual antiplatelets and low-salt cardiac diet..."
+                  label="Doctor's Additional Comments"
+                  placeholder="e.g. Patient successfully reperfused. Advised strict compliance to dual antiplatelets..."
                   className="sm:col-span-2"
                   {...register("doctorComments")}
                 />

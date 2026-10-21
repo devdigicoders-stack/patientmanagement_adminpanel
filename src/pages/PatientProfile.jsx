@@ -51,6 +51,13 @@ import { DatePicker } from "../components/ui/DatePicker";
 import { FileUpload } from "../components/ui/FileUpload";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { EmptyState } from "../components/ui/EmptyState";
+import {
+  DISEASES_SUGGESTIONS,
+  COMPLAINTS_SUGGESTIONS,
+  PROCEDURES_SUGGESTIONS,
+  DISCHARGE_REMARKS_SUGGESTIONS,
+} from "../data/clinicalMasterData";
+import DischargePrintModal from "../components/patient/DischargePrintModal";
 
 export const PatientProfile = () => {
   const { id } = useParams();
@@ -60,6 +67,7 @@ export const PatientProfile = () => {
   const [activeTab, setActiveTab] = useState("dossier"); // "dossier", "timeline", "medications", "documents"
   const [loading, setLoading] = useState(true);
   const [patient, setPatient] = useState(null);
+  const [showDischargeSlip, setShowDischargeSlip] = useState(false);
   const [visits, setVisits] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -414,6 +422,11 @@ export const PatientProfile = () => {
               <span className="px-2.5 py-0.5 rounded-lg bg-[#e8f2fe] text-[#0a6cf0] font-bold border border-blue-200/60">
                 CR: {patient.crNo}
               </span>
+              {(patient.ipNo || hospital.ipNumber) && (
+                <span className="px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-700 font-bold border border-purple-200/60">
+                  IP: {patient.ipNo || hospital.ipNumber}
+                </span>
+              )}
               <span>Ward: <strong>{wardDetails.ward || "General Ward"}</strong> ({wardDetails.bedNumber || "Unassigned"})</span>
               <span>•</span>
               <span>Doctor: <strong className="text-slate-800">{doctorDetails.doctorName || "Dr. Assigned"}</strong></span>
@@ -432,6 +445,15 @@ export const PatientProfile = () => {
           >
             Back
           </Button>
+
+          <button
+            onClick={() => setShowDischargeSlip(true)}
+            className="h-8 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+            title="Single Page A4 Discharge Summary & Print"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Discharge Slip (A4)</span>
+          </button>
 
           <Button
             variant="view"
@@ -576,12 +598,12 @@ export const PatientProfile = () => {
                   <span className="font-mono font-bold text-[#0a6cf0] mt-0.5 block">{patient.crNo}</span>
                 </div>
                 <div>
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Hospital Number</span>
-                  <span className="font-mono text-slate-800 mt-0.5 block">{hospital.hospitalNumber || "N/A"}</span>
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Inpatient (IP) No.</span>
+                  <span className="font-mono font-bold text-purple-700 mt-0.5 block">{patient.ipNo || hospital.ipNumber || hospital.hospitalNumber || "N/A"}</span>
                 </div>
                 <div>
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Patient File No.</span>
-                  <span className="font-mono text-slate-800 mt-0.5 block">{hospital.patientNumber || "N/A"}</span>
+                  <span className="font-mono text-slate-800 mt-0.5 block">{hospital.patientNumber || hospital.hospitalNumber || "N/A"}</span>
                 </div>
                 <div>
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Ward</span>
@@ -1309,6 +1331,13 @@ export const PatientProfile = () => {
         confirmText={isDeletingVisit ? "Deleting..." : "Delete Visit"}
         variant="danger"
         isLoading={isDeletingVisit}
+      />
+
+      {/* DEDICATED SINGLE-PAGE A4 DISCHARGE SLIP MODAL */}
+      <DischargePrintModal
+        isOpen={showDischargeSlip}
+        onClose={() => setShowDischargeSlip(false)}
+        patient={patient}
       />
     </div>
   );

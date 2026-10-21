@@ -6,6 +6,7 @@ import { patientService } from "../../services/patientService";
 import { useToast } from "../../hooks/useToast";
 import Button, { actionBtnStyles, actionBadgeBtnStyles } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
+import DischargePrintModal from "../../components/patient/DischargePrintModal";
 
 export const IPDReportPage = () => {
   const [filters, setFilters] = useState({
@@ -18,6 +19,7 @@ export const IPDReportPage = () => {
   });
 
   const [patients, setPatients] = useState([]);
+  const [selectedPrintPatient, setSelectedPrintPatient] = useState(null);
   const [summary, setSummary] = useState(null);
   const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -183,6 +185,7 @@ export const IPDReportPage = () => {
               <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-100">
                 <tr>
                   <th className="p-3.5 pl-6 whitespace-nowrap">CR Number</th>
+                  <th className="p-3.5 whitespace-nowrap">IP Number</th>
                   <th className="p-3.5 whitespace-nowrap">Patient Name</th>
                   <th className="p-3.5 whitespace-nowrap">Ward / Bed</th>
                   <th className="p-3.5 whitespace-nowrap">Doctor</th>
@@ -195,12 +198,18 @@ export const IPDReportPage = () => {
                 {patients.map((p) => {
                   const status = p.status || p.statusOnDischarge || "Admitted";
                   const admDate = p.admissionDetails?.admissionDate || new Date(p.createdAt).toLocaleDateString();
+                  const ipNum = p.ipNo || p.hospitalDetails?.ipNumber || p.hospitalDetails?.hospitalNumber || "—";
 
                   return (
                     <tr key={p._id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-3.5 pl-6 whitespace-nowrap">
-                        <span className="font-mono font-bold text-xs text-purple-700 bg-purple-50/80 px-2.5 py-1 rounded-xl border border-purple-200/70">
+                        <span className="font-mono font-bold text-xs text-sky-700 bg-sky-50/80 px-2.5 py-1 rounded-xl border border-sky-200/70">
                           {p.crNo}
+                        </span>
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <span className="font-mono font-bold text-xs text-purple-700 bg-purple-50/80 px-2 py-0.5 rounded-lg border border-purple-200/70">
+                          {ipNum}
                         </span>
                       </td>
                       <td className="p-3.5 font-bold text-slate-900 whitespace-nowrap">
@@ -230,16 +239,15 @@ export const IPDReportPage = () => {
                             <Eye className="w-3.5 h-3.5" />
                             <span>View</span>
                           </Link>
-                          <a
-                            href={reportService.getPatientPdfUrl(p._id)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPrintPatient(p)}
                             className={actionBadgeBtnStyles.print}
-                            title="Print Case Sheet"
+                            title="Print Single Page A4 Discharge Slip"
                           >
                             <Printer className="w-3.5 h-3.5" />
-                            <span>Print</span>
-                          </a>
+                            <span>Slip (A4)</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => setDeleteCandidate(p)}
@@ -258,6 +266,13 @@ export const IPDReportPage = () => {
           </div>
         )}
       </div>
+
+      {/* DEDICATED A4 SINGLE PAGE DISCHARGE SLIP MODAL */}
+      <DischargePrintModal
+        isOpen={!!selectedPrintPatient}
+        onClose={() => setSelectedPrintPatient(null)}
+        patient={selectedPrintPatient}
+      />
 
       {/* DELETE CONFIRMATION DIALOG */}
       <ConfirmDialog

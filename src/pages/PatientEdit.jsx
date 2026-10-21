@@ -33,6 +33,13 @@ import { Textarea } from "../components/ui/Textarea";
 import { Button } from "../components/ui/Button";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 import { Badge } from "../components/ui/Badge";
+import {
+  DISEASES_SUGGESTIONS,
+  COMPLAINTS_SUGGESTIONS,
+  PROCEDURES_SUGGESTIONS,
+  DISCHARGE_REMARKS_SUGGESTIONS,
+  INVESTIGATION_SUGGESTIONS,
+} from "../data/clinicalMasterData";
 
 export const PatientEdit = () => {
   const { id } = useParams();
@@ -50,6 +57,8 @@ export const PatientEdit = () => {
   // Form State covering all 25 Proposal Fields - All empty initial state
   const [formData, setFormData] = useState({
     // Phase 1: Identity & Contact (Points 2, 5, 6)
+    crNo: "",
+    ipNo: "",
     name: "",
     fatherGuardianName: "",
     age: "",
@@ -86,6 +95,7 @@ export const PatientEdit = () => {
     operationProcedureDetails: "",
     courseInHospital: "",
     doctorComments: "",
+    dischargeRemarks: "",
     followUpDate: "",
     followUpInstructions: "",
     followUpNotes: "",
@@ -136,6 +146,8 @@ export const PatientEdit = () => {
 
         setFormData({
           // Phase 1
+          crNo: pat.crNo || "",
+          ipNo: pat.ipNo || hospital.ipNumber || hospital.hospitalNumber || "",
           name: personal.name || personal.patientName || "",
           fatherGuardianName: personal.fatherGuardianName || personal.fatherName || "",
           age: personal.age ?? "",
@@ -172,6 +184,7 @@ export const PatientEdit = () => {
           operationProcedureDetails: treatment.operationProcedureDetails || "",
           courseInHospital: pat.courseInHospital || "",
           doctorComments: pat.doctorComments || "",
+          dischargeRemarks: pat.dischargeRemarks || pat.doctorComments || "",
           followUpDate: followUp.date || followUp.followUpDate || "",
           followUpInstructions: followUp.instructions || "",
           followUpNotes: followUp.notes || "",
@@ -222,6 +235,9 @@ export const PatientEdit = () => {
     setIsSubmitting(true);
     try {
       const payload = {
+        crNo: formData.crNo.trim(),
+        ipNo: formData.ipNo.trim(),
+        dischargeRemarks: formData.dischargeRemarks.trim(),
         personalDetails: {
           name: formData.name.trim(),
           fatherGuardianName: formData.fatherGuardianName.trim(),
@@ -238,8 +254,9 @@ export const PatientEdit = () => {
           pincode: formData.pincode.trim(),
         },
         hospitalDetails: {
-          hospitalNumber: formData.hospitalNumber.trim(),
+          hospitalNumber: formData.hospitalNumber.trim() || formData.ipNo.trim(),
           patientNumber: formData.patientNumber.trim(),
+          ipNumber: formData.ipNo.trim(),
         },
         wardDetails: {
           ward: formData.ward,
@@ -612,35 +629,49 @@ export const PatientEdit = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {/* Immutable Central Registration Number */}
+              {/* Manual Central Registration Number */}
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-slate-400" />
-                  CR Number (Permanent & Locked)
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>CR Number *</span>
+                  <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    मैनुअल संपादन
+                  </span>
                 </label>
                 <input
                   type="text"
-                  value={patient.crNo}
-                  disabled
-                  className="w-full bg-slate-100/90 border border-slate-200 text-xs rounded-xl px-3.5 py-2.5 text-slate-500 font-mono font-bold cursor-not-allowed outline-none"
+                  value={formData.crNo}
+                  onChange={(e) => setFormData({ ...formData, crNo: e.target.value })}
+                  placeholder="e.g. CR-2026-0001"
+                  required
+                  className="w-full bg-white border border-sky-300 text-xs rounded-xl px-3.5 py-2.5 text-sky-950 font-mono font-bold focus:border-sky-600 outline-none shadow-2xs"
                 />
                 <span className="text-[10px] text-slate-400 mt-0.5 block">Central Registration numbers cannot be altered</span>
               </div>
 
-              {/* Hospital Number */}
+              {/* Manual IP Number */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span>IP Number </span>
+                  <span className="text-[10px] text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                    IPD No.
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.ipNo}
+                  onChange={(e) => setFormData({ ...formData, ipNo: e.target.value })}
+                  placeholder="e.g. IP-2026-042"
+                  className="w-full bg-white border border-purple-300 text-xs rounded-xl px-3.5 py-2.5 text-purple-950 font-mono font-bold focus:border-purple-600 outline-none shadow-2xs"
+                />
+                <span className="text-[10px] text-slate-400 mt-0.5 block">IP Number / Ward admission number</span>
+              </div>
+
+              {/* Hospital File Number */}
               <Input
-                label="Hospital Number"
+                label="Hospital File / Case Number"
                 value={formData.hospitalNumber}
                 onChange={(e) => setFormData({ ...formData, hospitalNumber: e.target.value })}
                 placeholder="e.g. HOSP-2026-90"
-              />
-
-              {/* Patient File Number */}
-              <Input
-                label="Patient File / Case Number"
-                value={formData.patientNumber}
-                onChange={(e) => setFormData({ ...formData, patientNumber: e.target.value })}
-                placeholder="e.g. FILE-8849"
               />
 
               {/* Clinical Status */}
@@ -759,14 +790,22 @@ export const PatientEdit = () => {
             </div>
 
             <div className="flex flex-col gap-5">
-              {/* Diagnosis Details */}
-              <Textarea
-                label="Diagnosis Details (Point 12)"
-                rows={2}
-                value={formData.diagnosisDetails}
-                onChange={(e) => setFormData({ ...formData, diagnosisDetails: e.target.value })}
-                placeholder="Primary provisional / definitive clinical diagnosis..."
-              />
+              {/* Diagnosis Details with Suggestions Datalist */}
+              <div className="flex flex-col">
+                <Input
+                  label="Diagnosis Details"
+                  placeholder="Primary provisional / definitive clinical diagnosis..."
+                  list="edit-diseases-suggestions-list"
+                  value={formData.diagnosisDetails}
+                  onChange={(e) => setFormData({ ...formData, diagnosisDetails: e.target.value })}
+                />
+                <datalist id="edit-diseases-suggestions-list">
+                  {DISEASES_SUGGESTIONS.map((dis, idx) => (
+                    <option key={idx} value={dis} />
+                  ))}
+                </datalist>
+                <span className="text-[10px] text-slate-400 mt-0.5">Choose from the suggestion list or type a custom name</span>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Presenting Complaints */}
@@ -887,15 +926,33 @@ export const PatientEdit = () => {
                   placeholder="Ward progress, clinical evolution during admission..."
                 />
 
-                {/* Doctor's Comments */}
-                <Textarea
-                  label="Doctor's Comments & Advice (Point 22)"
-                  rows={3}
-                  value={formData.doctorComments}
-                  onChange={(e) => setFormData({ ...formData, doctorComments: e.target.value })}
-                  placeholder="Consultant remarks, lifestyle modifications, precautions..."
-                />
+                {/* Discharge Remarks with Master Suggestions */}
+                <div className="flex flex-col">
+                  <Input
+                    label="Discharge Remarks"
+                    placeholder="e.g. Discharged in stable condition. Advised complete bed rest..."
+                    list="edit-discharge-remarks-suggestions-list"
+                    className="border-red-200 focus:border-red-500 font-medium"
+                    value={formData.dischargeRemarks}
+                    onChange={(e) => setFormData({ ...formData, dischargeRemarks: e.target.value })}
+                  />
+                  <datalist id="edit-discharge-remarks-suggestions-list">
+                    {DISCHARGE_REMARKS_SUGGESTIONS.map((rem, idx) => (
+                      <option key={idx} value={rem} />
+                    ))}
+                  </datalist>
+                  <span className="text-[10px] text-slate-400 mt-0.5">Discharge Remarks will be displayed at the end of the discharge print.</span>
+                </div>
               </div>
+
+              {/* Doctor's Comments */}
+              <Textarea
+                label="Doctor's Comments & Advice (Point 22)"
+                rows={2}
+                value={formData.doctorComments}
+                onChange={(e) => setFormData({ ...formData, doctorComments: e.target.value })}
+                placeholder="Consultant remarks, lifestyle modifications, precautions..."
+              />
 
               {/* Follow-up Details Card */}
               <div className="p-4 rounded-2xl bg-[#f0f6fe]/40 border border-blue-100 grid grid-cols-1 sm:grid-cols-3 gap-4">

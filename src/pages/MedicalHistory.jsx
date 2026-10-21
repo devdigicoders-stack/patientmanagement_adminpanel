@@ -35,6 +35,7 @@ import { Button } from "../components/ui/Button";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import DischargePrintModal from "../components/patient/DischargePrintModal";
 
 export const MedicalHistory = () => {
   const { id } = useParams();
@@ -49,6 +50,7 @@ export const MedicalHistory = () => {
 
   // Selected visit for printing individual episode slip
   const [selectedVisitForPrint, setSelectedVisitForPrint] = useState(null);
+  const [showDischargeModal, setShowDischargeModal] = useState(false);
   const [deleteVisitCandidate, setDeleteVisitCandidate] = useState(null);
   const [isDeletingVisit, setIsDeletingVisit] = useState(false);
 
@@ -333,6 +335,15 @@ export const MedicalHistory = () => {
           >
             Back to Dossier
           </Button>
+
+          <button
+            onClick={() => setShowDischargeModal(true)}
+            className="h-8 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 cursor-pointer transition-all"
+            title="Single Page A4 Discharge Summary & Print"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Discharge Slip (A4)</span>
+          </button>
 
           <Button
             variant="print"
@@ -939,6 +950,13 @@ export const MedicalHistory = () => {
         confirmText={isDeletingVisit ? "Deleting..." : "Delete Visit"}
         variant="danger"
         isLoading={isDeletingVisit}
+      />
+
+      {/* DEDICATED SINGLE-PAGE A4 DISCHARGE SLIP MODAL */}
+      <DischargePrintModal
+        isOpen={showDischargeModal}
+        onClose={() => setShowDischargeModal(false)}
+        patient={patient}
       />
     </div>
   );
