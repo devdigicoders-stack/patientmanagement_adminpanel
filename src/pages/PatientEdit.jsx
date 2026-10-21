@@ -39,6 +39,7 @@ import {
   PROCEDURES_SUGGESTIONS,
   DISCHARGE_REMARKS_SUGGESTIONS,
   INVESTIGATION_SUGGESTIONS,
+  NEUROSURGERY_WARDS,
 } from "../data/clinicalMasterData";
 
 export const PatientEdit = () => {
@@ -105,7 +106,7 @@ export const PatientEdit = () => {
   const [filterOptions, setFilterOptions] = useState({
     doctors: [],
     departments: [],
-    wards: [],
+    wards: NEUROSURGERY_WARDS,
   });
 
   useEffect(() => {
@@ -116,7 +117,7 @@ export const PatientEdit = () => {
           setFilterOptions({
             doctors: res.data.doctors || [],
             departments: res.data.departments || [],
-            wards: res.data.wards || [],
+            wards: NEUROSURGERY_WARDS, // STRICTLY ONLY the 5 Neurosurgery wards
           });
         }
       } catch (err) {
@@ -460,8 +461,8 @@ export const PatientEdit = () => {
               type="button"
               onClick={() => setActivePhase(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${isActive
-                  ? "bg-gradient-to-r from-[#0a6cf0] to-[#0095ff] text-white shadow-md shadow-blue-500/20"
-                  : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
+                ? "bg-gradient-to-r from-[#0a6cf0] to-[#0095ff] text-white shadow-md shadow-blue-500/20"
+                : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
                 }`}
             >
               <IconComp className="w-4 h-4" />
@@ -645,7 +646,7 @@ export const PatientEdit = () => {
                   required
                   className="w-full bg-white border border-sky-300 text-xs rounded-xl px-3.5 py-2.5 text-sky-950 font-mono font-bold focus:border-sky-600 outline-none shadow-2xs"
                 />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">Central Registration numbers cannot be altered</span>
+                <span className="text-[10px] text-slate-400 mt-0.5 block">Manual Central Registration number</span>
               </div>
 
               {/* Manual IP Number */}
@@ -926,13 +927,21 @@ export const PatientEdit = () => {
                   placeholder="Ward progress, clinical evolution during admission..."
                 />
 
-                {/* Discharge Remarks with Master Suggestions */}
-                <div className="flex flex-col">
+                {/* Discharge Remarks with Master Suggestions & Quick Chips */}
+                <div className="p-4 bg-amber-50/60 border-2 border-amber-300 rounded-2xl flex flex-col gap-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <label className="text-xs font-bold text-amber-950 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      Discharge Remarks
+                    </label>
+                    <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md border border-amber-300">
+                      Discharge Remarks will be displayed at the end of the single page A4 discharge print.
+                    </span>
+                  </div>
                   <Input
-                    label="Discharge Remarks"
-                    placeholder="e.g. Discharged in stable condition. Advised complete bed rest..."
+                    placeholder="e.g. Patient discharged in conscious, alert, and hemodynamically stable condition..."
                     list="edit-discharge-remarks-suggestions-list"
-                    className="border-red-200 focus:border-red-500 font-medium"
+                    className="border-amber-300 focus:border-amber-600 bg-white font-medium text-slate-900"
                     value={formData.dischargeRemarks}
                     onChange={(e) => setFormData({ ...formData, dischargeRemarks: e.target.value })}
                   />
@@ -941,7 +950,27 @@ export const PatientEdit = () => {
                       <option key={idx} value={rem} />
                     ))}
                   </datalist>
-                  <span className="text-[10px] text-slate-400 mt-0.5">Discharge Remarks will be displayed at the end of the discharge print.</span>
+                  {/* Quick Select Remark Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] font-bold text-amber-800">Quick Select:</span>
+                    {DISCHARGE_REMARKS_SUGGESTIONS.slice(0, 4).map((rem, rIdx) => (
+                      <button
+                        type="button"
+                        key={rIdx}
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            dischargeRemarks: rem,
+                          }));
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 text-[10.5px] font-medium border border-amber-200 shadow-2xs transition-all cursor-pointer"
+                        title={rem}
+                      >
+                        ✓ {rem.split(" ").slice(0, 5).join(" ")}...
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-[10px] text-amber-800/80">Discharge Remarks will be displayed at the end of the single page A4 discharge print.</span>
                 </div>
               </div>
 

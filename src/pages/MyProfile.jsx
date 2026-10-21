@@ -32,6 +32,7 @@ import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 import { Badge } from "../components/ui/Badge";
+import { AdminPhotoModal } from "../components/ui/AdminPhotoModal";
 
 export const MyProfile = () => {
   const { user, setUser, logout, loading: authLoading } = useAuth();
@@ -41,6 +42,7 @@ export const MyProfile = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState("");
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -231,7 +233,9 @@ export const MyProfile = () => {
           <img
             src={formData.avatar}
             alt={formData.name || "User Avatar"}
-            className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-[#e8f2fe] shadow-lg shadow-blue-500/10 group-hover:brightness-95 transition-all"
+            onClick={() => setShowPhotoModal(true)}
+            title="Click to view full photo"
+            className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover border-4 border-[#e8f2fe] shadow-lg shadow-blue-500/10 group-hover:brightness-95 transition-all cursor-pointer hover:scale-102"
             onError={(e) => {
               e.currentTarget.src = "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&auto=format&fit=crop";
             }}
@@ -599,6 +603,15 @@ export const MyProfile = () => {
           </div>
         </div>
       )}
+      {/* Admin Full Photo Modal */}
+      <AdminPhotoModal
+        isOpen={showPhotoModal}
+        onClose={() => setShowPhotoModal(false)}
+        src={formData.avatar}
+        name={formData.name || user?.name || "Admin"}
+        role={formData.role || user?.role || "Hospital Administrator"}
+        email={formData.email || user?.email}
+      />
     </div>
   );
 };

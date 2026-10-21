@@ -34,8 +34,11 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Breadcrumb } from "../components/ui/Breadcrumb";
 import { EmptyState } from "../components/ui/EmptyState";
-import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import DischargePrintModal from "../components/patient/DischargePrintModal";
+import {
+  DISEASES_SUGGESTIONS,
+  NEUROSURGERY_WARDS,
+} from "../data/clinicalMasterData";
 
 export const MedicalHistory = () => {
   const { id } = useParams();
@@ -62,7 +65,7 @@ export const MedicalHistory = () => {
     visitType: "OPD",
     doctorName: "Dr. Vikramaditya Roy",
     departmentName: "Cardiology",
-    ward: "General Medical Ward",
+    ward: "Neurosurgery General ward 1",
     bedNumber: "",
     diagnosis: "",
     presentingComplaints: "",
@@ -166,7 +169,7 @@ export const MedicalHistory = () => {
           visitType: "OPD",
           doctorName: "Dr. Vikramaditya Roy",
           departmentName: "Cardiology",
-          ward: "General Medical Ward",
+          ward: "Neurosurgery General ward 1",
           bedNumber: "",
           diagnosis: "",
           presentingComplaints: "",
@@ -774,11 +777,17 @@ export const MedicalHistory = () => {
                   </label>
                   <input
                     type="text"
+                    list="history-ward-list"
                     value={visitForm.ward}
                     onChange={(e) => setVisitForm({ ...visitForm, ward: e.target.value })}
-                    placeholder="e.g. General Ward or ICU"
+                    placeholder="e.g. Neurosurgery ICU"
                     className="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:border-[#0a6cf0] outline-none"
                   />
+                  <datalist id="history-ward-list">
+                    {NEUROSURGERY_WARDS.map((w, idx) => (
+                      <option key={idx} value={w} />
+                    ))}
+                  </datalist>
                 </div>
 
                 {/* Bed Number */}
@@ -803,12 +812,18 @@ export const MedicalHistory = () => {
                 </label>
                 <input
                   type="text"
+                  list="history-diagnosis-list"
                   value={visitForm.diagnosis}
                   onChange={(e) => setVisitForm({ ...visitForm, diagnosis: e.target.value })}
-                  placeholder="e.g. Acute Cor Pulmonale, Hypertension grade 2"
+                  placeholder="e.g. 104.01 - Glioblastoma Multiforme (GBM)"
                   required
                   className="w-full bg-slate-50 border border-slate-200 text-xs rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:border-[#0a6cf0] outline-none"
                 />
+                <datalist id="history-diagnosis-list">
+                  {DISEASES_SUGGESTIONS.map((d, idx) => (
+                    <option key={idx} value={d} />
+                  ))}
+                </datalist>
               </div>
 
               {/* Presenting Complaints & Vitals */}

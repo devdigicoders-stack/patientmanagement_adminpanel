@@ -35,6 +35,7 @@ import { Badge } from "../components/ui/Badge";
 import { Button, actionBtnStyles, actionBadgeBtnStyles } from "../components/ui/Button";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { getPatientStatus } from "../utils/helpers";
+import { NEUROSURGERY_WARDS } from "../data/clinicalMasterData";
 
 export const AllPatients = () => {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ export const AllPatients = () => {
   const [filterOptions, setFilterOptions] = useState({
     doctors: [],
     departments: [],
-    wards: [],
+    wards: NEUROSURGERY_WARDS,
   });
 
   useEffect(() => {
@@ -82,7 +83,10 @@ export const AllPatients = () => {
       try {
         const res = await patientService.getFilterOptions();
         if (res.success && res.data) {
-          setFilterOptions(res.data);
+          setFilterOptions({
+            ...res.data,
+            wards: NEUROSURGERY_WARDS,
+          });
         }
       } catch (err) {
         console.error("Failed to load patient dynamic filter options in AllPatients:", err);

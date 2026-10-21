@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   Menu, 
@@ -6,19 +6,52 @@ import {
   Calendar, 
   User, 
   Stethoscope, 
-  ChevronRight 
+  ChevronRight,
+  ChevronDown,
+  Lock,
+  LogOut
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import reportService from "../services/reportService";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 
 export const Topbar = ({ onMenuClick }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const profileDropdownRef = useRef(null);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleConfirmLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout();
+      setShowLogoutConfirm(false);
+      setShowProfileDropdown(false);
+      navigate("/login");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const defaultAvatar = "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&auto=format&fit=crop";
   const userAvatar = user?.avatar || defaultAvatar;
@@ -166,22 +199,109 @@ export const Topbar = ({ onMenuClick }) => {
         </div>
       </div>
 
-      {/* Right: User Avatar & Date Pill matching screenshot */}
-      <div className="flex items-center gap-3.5 sm:gap-4">
-        {/* User Profile Avatar Link */}
-        <Link to="/profile" className="flex items-center cursor-pointer">
-          <img
-            src={userAvatar}
-            alt={userName}
-            className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-xs hover:scale-105 transition-transform"
-          />
-        </Link>
+      {/* Right: User Avatar Dropdown & Date Pill */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* User Profile Dropdown Container */}
+        <div className="relative" ref={profileDropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowProfileDropdown((prev) => !prev)}
+            className="flex items-center gap-2 p-1 rounded-full hover:bg-blue-100/70 focus:outline-none transition-all cursor-pointer group"
+            title="Admin Menu (Profile & Logout)"
+            aria-expanded={showProfileDropdown}
+          >
+            <img
+              src={userAvatar}
+              alt={userName}
+              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-xs group-hover:scale-105 group-hover:ring-2 group-hover:ring-[#0a6cf0] transition-all"
+            />
+            <ChevronDown
+              className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 hidden sm:block ${
+                showProfileDropdown ? "rotate-180 text-[#0a6cf0]" : ""
+              }`}
+            />
+          </button>
+
+          {/* Profile Menu Dropdown */}
+          {showProfileDropdown && (
+            <div className="absolute right-0 mt-2.5 w-64 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-2 z-50 animate-fade-in">
+              {/* User Info Header */}
+              <div className="px-4 py-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={userAvatar}
+                    alt={userName}
+                    className="w-9 h-9 rounded-full object-cover border border-slate-200"
+                  />
+                  <div className="flex flex-col truncate">
+                    <p className="text-xs font-bold text-slate-900 truncate">{userName}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{user?.email || "admin@hospital.com"}</p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-[#0a6cf0] border border-blue-200/60">
+                    {user?.role || "Hospital Administrator"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Links */}
+              <div className="p-1.5 space-y-0.5">
+                <Link
+                  to="/profile"
+                  onClick={() => setShowProfileDropdown(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-[#0a6cf0] rounded-xl transition-colors"
+                >
+                  <User className="w-4 h-4 text-slate-500 group-hover:text-[#0a6cf0]" />
+                  <span>My Profile</span>
+                </Link>
+
+                <Link
+                  to="/change-password"
+                  onClick={() => setShowProfileDropdown(false)}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-[#0a6cf0] rounded-xl transition-colors"
+                >
+                  <Lock className="w-4 h-4 text-slate-500" />
+                  <span>Change Password</span>
+                </Link>
+              </div>
+
+              {/* Logout Option */}
+              <div className="p-1.5 pt-1 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfileDropdown(false);
+                    setShowLogoutConfirm(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors text-left cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 text-rose-500" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Date Pill matching screenshot (Calendar icon + Mon, 10 Oct 2026) */}
         <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-[#e8f2fe] text-[#0a6cf0] text-xs font-bold border border-blue-200/60 shadow-xs">
           <Calendar className="w-3.5 h-3.5 text-[#0a6cf0]" strokeWidth={2.4} />
           <span>{formattedDate}</span>
         </div>
+
+        {/* Logout Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={showLogoutConfirm}
+          onClose={() => setShowLogoutConfirm(false)}
+          onConfirm={handleConfirmLogout}
+          title="Confirm Logout"
+          message="Are you sure you want to log out of the Patient Management System?"
+          confirmText={isLoggingOut ? "Logging out..." : "Yes, Logout"}
+          cancelText="Cancel"
+          variant="danger"
+          isLoading={isLoggingOut}
+        />
       </div>
     </header>
   );

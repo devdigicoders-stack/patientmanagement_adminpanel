@@ -47,6 +47,7 @@ import {
   PROCEDURES_SUGGESTIONS,
   DISCHARGE_REMARKS_SUGGESTIONS,
   INVESTIGATION_SUGGESTIONS,
+  NEUROSURGERY_WARDS,
 } from "../data/clinicalMasterData";
 import DischargePrintModal from "../components/patient/DischargePrintModal";
 
@@ -241,11 +242,11 @@ export const PatientRegistration = () => {
     name: "medications",
   });
 
-  // Dynamic departments, wards, and doctors fetched directly from patient collection
+  // Dynamic departments, wards, and doctors fetched directly from patient collection & Neurosurgery defaults
   const [dynamicOptions, setDynamicOptions] = useState({
     doctors: [],
     departments: [],
-    wards: [],
+    wards: NEUROSURGERY_WARDS,
   });
 
   useEffect(() => {
@@ -256,7 +257,7 @@ export const PatientRegistration = () => {
           setDynamicOptions({
             doctors: res.data.doctors || [],
             departments: res.data.departments || [],
-            wards: res.data.wards || [],
+            wards: NEUROSURGERY_WARDS, // STRICTLY ONLY the 5 Neurosurgery wards
           });
         }
       } catch (err) {
@@ -637,18 +638,18 @@ export const PatientRegistration = () => {
                 type="button"
                 onClick={() => setCurrentStep(s.id)}
                 className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all cursor-pointer ${isActive
-                    ? "bg-[#e8f2fe] border-2 border-[#0a6cf0] text-slate-900 shadow-xs"
-                    : isCompleted
-                      ? "bg-slate-50/80 border border-emerald-200 text-slate-700 hover:bg-slate-100"
-                      : "bg-transparent border border-transparent text-slate-400 hover:bg-slate-50"
+                  ? "bg-[#e8f2fe] border-2 border-[#0a6cf0] text-slate-900 shadow-xs"
+                  : isCompleted
+                    ? "bg-slate-50/80 border border-emerald-200 text-slate-700 hover:bg-slate-100"
+                    : "bg-transparent border border-transparent text-slate-400 hover:bg-slate-50"
                   }`}
               >
                 <div
                   className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs transition-colors ${isActive
-                      ? "bg-[#0a6cf0] text-white shadow-xs"
-                      : isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : "bg-slate-200 text-slate-600"
+                    ? "bg-[#0a6cf0] text-white shadow-xs"
+                    : isCompleted
+                      ? "bg-emerald-500 text-white"
+                      : "bg-slate-200 text-slate-600"
                     }`}
                 >
                   {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : s.id}
@@ -841,7 +842,7 @@ export const PatientRegistration = () => {
                 </div>
                 <div className="lg:col-span-2">
                   <Input
-                    label="Patient Tracking Number (ट्रैकिंग नं.)"
+                    label="Patient Tracking Number"
                     placeholder="e.g. P-49120"
                     {...register("hospitalDetails.patientNumber")}
                   />
@@ -1208,13 +1209,21 @@ export const PatientRegistration = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Discharge Remarks with Master Suggestions */}
-                <div className="sm:col-span-2 flex flex-col">
+                {/* Discharge Remarks with Master Suggestions & Quick Chips */}
+                <div className="sm:col-span-2 p-4 bg-amber-50/60 border-2 border-amber-300 rounded-2xl flex flex-col gap-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <label className="text-xs font-bold text-amber-950 flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      Discharge Remarks
+                    </label>
+                    <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md border border-amber-300">
+                 Discharge Remarks will be displayed at the end of the single page A4 discharge print.
+                    </span>
+                  </div>
                   <Input
-                    label="Discharge Remarks"
-                    placeholder="e.g. Discharged in stable condition. Advised complete rest and prescribed medications..."
+                    placeholder="e.g. Patient discharged in conscious, alert, and hemodynamically stable condition..."
                     list="discharge-remarks-suggestions-list"
-                    className="border-red-200 focus:border-red-500 font-medium"
+                    className="border-amber-300 focus:border-amber-600 bg-white font-medium text-slate-900"
                     {...register("dischargeRemarks")}
                   />
                   <datalist id="discharge-remarks-suggestions-list">
@@ -1222,8 +1231,28 @@ export const PatientRegistration = () => {
                       <option key={idx} value={rem} />
                     ))}
                   </datalist>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Discharge Remarks will be displayed at the end of the discharge print.
+                  {/* Quick Select Remark Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] font-bold text-amber-800">Quick Select:</span>
+                    {DISCHARGE_REMARKS_SUGGESTIONS.slice(0, 4).map((rem, rIdx) => (
+                      <button
+                        type="button"
+                        key={rIdx}
+                        onClick={() => {
+                          reset({
+                            ...control._formValues,
+                            dischargeRemarks: rem,
+                          });
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 text-amber-900 text-[10.5px] font-medium border border-amber-200 shadow-2xs transition-all cursor-pointer"
+                        title={rem}
+                      >
+                        ✓ {rem.split(" ").slice(0, 5).join(" ")}...
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10.5px] text-amber-800/80">
+                    Discharge Remarks will be displayed at the end of the single page A4 discharge print.
                   </p>
                 </div>
 

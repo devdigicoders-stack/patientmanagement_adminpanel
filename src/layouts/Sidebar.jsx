@@ -15,11 +15,13 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
+import { AdminPhotoModal } from "../components/ui/AdminPhotoModal";
 
 export const Sidebar = ({ isOpen, onClose, isCollapsed, toggleCollapse }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const defaultAvatar = "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=300&auto=format&fit=crop";
   const userAvatar = user?.avatar || defaultAvatar;
@@ -207,14 +209,18 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed, toggleCollapse }) => {
         }`}>
           {!isCollapsed ? (
             <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <div className="flex items-center gap-2.5 overflow-hidden">
+              <div
+                className="flex items-center gap-2.5 overflow-hidden cursor-pointer group"
+                onClick={() => setShowPhotoModal(true)}
+                title="Click to view full photo"
+              >
                 <img
                   src={userAvatar}
                   alt={userName}
-                  className="w-9 h-9 rounded-full object-cover border border-sky-400/40 shrink-0 shadow-sm"
+                  className="w-9 h-9 rounded-full object-cover border border-sky-400/40 shrink-0 shadow-sm group-hover:scale-105 group-hover:border-sky-300 transition-all"
                 />
                 <div className="flex flex-col truncate">
-                  <span className="text-xs font-bold text-white truncate">{userName}</span>
+                  <span className="text-xs font-bold text-white truncate group-hover:text-sky-300 transition-colors">{userName}</span>
                   <span className="text-[10px] text-slate-400 truncate">Hospital Administrator</span>
                 </div>
               </div>
@@ -232,8 +238,9 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed, toggleCollapse }) => {
               <img
                 src={userAvatar}
                 alt={userName}
-                title={`${userName} (Administrator)`}
-                className="w-9 h-9 rounded-full object-cover border border-sky-400/40 shrink-0 shadow-sm cursor-pointer"
+                title={`${userName} (Click to view full photo)`}
+                onClick={() => setShowPhotoModal(true)}
+                className="w-9 h-9 rounded-full object-cover border border-sky-400/40 shrink-0 shadow-sm cursor-pointer hover:scale-110 hover:border-sky-300 transition-all"
               />
               <button
                 onClick={handleLogoutClick}
@@ -246,6 +253,16 @@ export const Sidebar = ({ isOpen, onClose, isCollapsed, toggleCollapse }) => {
           )}
         </div>
       </aside>
+
+      {/* Admin Full Photo Modal */}
+      <AdminPhotoModal
+        isOpen={showPhotoModal}
+        onClose={() => setShowPhotoModal(false)}
+        src={userAvatar}
+        name={userName}
+        role={user?.role || "Hospital Administrator"}
+        email={user?.email}
+      />
 
       {/* Logout Confirmation Alert Dialog */}
       <ConfirmDialog
